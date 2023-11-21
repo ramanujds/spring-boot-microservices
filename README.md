@@ -1,5 +1,11 @@
 # Introduction to Microservices
 
+## Examples and Case Studies
+
+https://github.com/ramanujds/online-shopping-app
+
+
+
 ## Step 1: Definition
 Microservices is an architectural style that structures an application as a collection of small, independent services, each focusing on a specific business capability.
 
