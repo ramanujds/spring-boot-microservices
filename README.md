@@ -354,3 +354,358 @@ String url = "https://api.example.com/user/{id}";
 User user = restTemplate.getForObject(url, User.class, 1);
 ```
 
+
+
+
+### Spring Cloud Overview and Its Modules:
+
+- **Definition:** Spring Cloud is a set of tools and frameworks for building cloud-native applications.
+- **Modules:**
+  - **Eureka:** Service discovery and registration.
+  - **Config:** Externalized configuration management.
+  - **Ribbon:** Load balancing.
+  - **Hystrix:** Circuit breaker pattern.
+  - **Feign:** Declarative REST client.
+
+### Spring Cloud Eureka:
+
+#### Why Discovery Server?
+
+- **Purpose:** In a microservices architecture, services need a way to discover and communicate with each other dynamically.
+- **Eureka:** A self-service discovery server for service instances.
+
+#### How to Create a Eureka Server:
+
+- **Annotation:** Use `@EnableEurekaServer` or `@EnableDiscoveryServer` on a Spring Boot application class.
+
+**Example:**
+```java
+@SpringBootApplication
+@EnableEurekaServer
+public class EurekaServerApplication {
+    public static void main(String[] args) {
+        SpringApplication.run(EurekaServerApplication.class, args);
+    }
+}
+```
+
+#### How to Register Eureka Client:
+
+- **Annotation:** Use `@EnableEurekaClient` or `@EnableDiscoveryClient` on a Spring Boot application class.
+
+**Example:**
+```java
+@SpringBootApplication
+@EnableEurekaClient
+public class EurekaClientApplication {
+    public static void main(String[] args) {
+        SpringApplication.run(EurekaClientApplication.class, args);
+    }
+}
+```
+
+#### How to Look Up a Service from Eureka Server:
+
+- **RestTemplate:** Use a `RestTemplate` to make requests to services registered with Eureka.
+
+**Example:**
+```java
+@RestController
+public class MyController {
+
+    @Autowired
+    private RestTemplate restTemplate;
+
+    @GetMapping("/hello")
+    public String sayHello() {
+        String serviceUrl = "http://my-eureka-client/hello-service";
+        return restTemplate.getForObject(serviceUrl, String.class);
+    }
+}
+```
+
+In this example, the service named "my-eureka-client" is looked up in Eureka, and a request is made to its "/hello-service" endpoint.
+
+
+### Spring Cloud Ribbon:
+
+#### Why Client-Side Load Balancing?
+
+- **Traditional Load Balancing:** Centralized load balancers distribute traffic, but they can become bottlenecks.
+- **Client-Side Load Balancing:** Each client instance is aware of the available service instances and can make load-balanced requests.
+
+#### What is Ribbon and How to Use Spring Ribbon?
+
+- **Ribbon:** A client-side load balancing library provided by Spring Cloud.
+- **Usage in Spring Boot:**
+  - Add the `spring-cloud-starter-netflix-ribbon` dependency.
+  - Use `@LoadBalanced` with `RestTemplate` to enable load balancing.
+
+**Example:**
+
+1. **Add Dependency:**
+   ```xml
+   <dependency>
+       <groupId>org.springframework.cloud</groupId>
+       <artifactId>spring-cloud-starter-netflix-ribbon</artifactId>
+   </dependency>
+   ```
+
+2. **Use `@LoadBalanced` with `RestTemplate`:**
+   ```java
+   import org.springframework.cloud.client.loadbalancer.LoadBalanced;
+   import org.springframework.context.annotation.Bean;
+   import org.springframework.context.annotation.Configuration;
+   import org.springframework.web.client.RestTemplate;
+
+   @Configuration
+   public class RibbonConfig {
+
+       @Bean
+       @LoadBalanced
+       public RestTemplate restTemplate() {
+           return new RestTemplate();
+       }
+   }
+   ```
+
+3. **Make Load-Balanced Requests:**
+   ```java
+   import org.springframework.beans.factory.annotation.Autowired;
+   import org.springframework.web.bind.annotation.GetMapping;
+   import org.springframework.web.bind.annotation.RestController;
+   import org.springframework.web.client.RestTemplate;
+
+   @RestController
+   public class MyController {
+
+       @Autowired
+       private RestTemplate restTemplate;
+
+       @GetMapping("/hello")
+       public String sayHello() {
+           // Service name ("my-eureka-client") is used instead of a fixed URL
+           String serviceUrl = "http://my-eureka-client/hello-service";
+           return restTemplate.getForObject(serviceUrl, String.class);
+       }
+   }
+   ```
+
+In this example, `@LoadBalanced` is used with `RestTemplate` to enable client-side load balancing with Ribbon. The `RestTemplate` is then used to make requests to a service named "my-eureka-client," and Ribbon handles the load balancing among available instances of that service.
+
+
+
+### Spring Cloud Feign:
+
+#### What is Feign?
+
+- **Definition:** Feign is a declarative web service client developed by Netflix and integrated into Spring Cloud.
+- **Purpose:** Simplifies the creation of REST clients by allowing developers to write HTTP requests in a straightforward and declarative manner.
+
+#### Implementing REST Clients in Declarative Approach:
+
+- **Annotation:** Use `@FeignClient` to declare a REST client interface. Feign will automatically create a proxy implementing that interface.
+- **Method Signatures:** Declare methods in the interface with annotations such as `@RequestMapping`, `@GetMapping`, `@PostMapping`, etc.
+
+**Example:**
+
+1. **Add Dependency:**
+   ```xml
+   <dependency>
+       <groupId>org.springframework.cloud</groupId>
+       <artifactId>spring-cloud-starter-openfeign</artifactId>
+   </dependency>
+   ```
+
+2. **Enable Feign in the Application:**
+   ```java
+   import org.springframework.cloud.openfeign.EnableFeignClients;
+   import org.springframework.context.annotation.Configuration;
+
+   @Configuration
+   @EnableFeignClients
+   public class FeignConfig {
+   }
+   ```
+
+3. **Declare Feign Client Interface:**
+   ```java
+   import org.springframework.cloud.openfeign.FeignClient;
+   import org.springframework.web.bind.annotation.GetMapping;
+
+   @FeignClient(name = "my-eureka-client")
+   public interface HelloFeignClient {
+
+       @GetMapping("/hello-service")
+       String sayHello();
+   }
+   ```
+
+4. **Use Feign Client in Controller:**
+   ```java
+   import org.springframework.beans.factory.annotation.Autowired;
+   import org.springframework.web.bind.annotation.GetMapping;
+   import org.springframework.web.bind.annotation.RestController;
+
+   @RestController
+   public class MyController {
+
+       @Autowired
+       private HelloFeignClient helloFeignClient;
+
+       @GetMapping("/hello")
+       public String sayHello() {
+           return helloFeignClient.sayHello();
+       }
+   }
+   ```
+
+#### LAB: Implementing REST Client using Feign
+
+- **Objective:** Create a Feign client interface and use it in a Spring MVC controller to make a declarative REST request.
+
+**Instructions:**
+
+1. **Add Feign Dependency:**
+   ```xml
+   <dependency>
+       <groupId>org.springframework.cloud</groupId>
+       <artifactId>spring-cloud-starter-openfeign</artifactId>
+   </dependency>
+   ```
+
+2. **Enable Feign in the Application:**
+   ```java
+   import org.springframework.cloud.openfeign.EnableFeignClients;
+   import org.springframework.context.annotation.Configuration;
+
+   @Configuration
+   @EnableFeignClients
+   public class FeignConfig {
+   }
+   ```
+
+3. **Declare Feign Client Interface:**
+   ```java
+   import org.springframework.cloud.openfeign.FeignClient;
+   import org.springframework.web.bind.annotation.GetMapping;
+
+   @FeignClient(name = "example-service")
+   public interface ExampleFeignClient {
+
+       @GetMapping("/api/example")
+       String getExampleData();
+   }
+   ```
+
+4. **Use Feign Client in Controller:**
+   ```java
+   import org.springframework.beans.factory.annotation.Autowired;
+   import org.springframework.web.bind.annotation.GetMapping;
+   import org.springframework.web.bind.annotation.RestController;
+
+   @RestController
+   public class MyController {
+
+       @Autowired
+       private ExampleFeignClient exampleFeignClient;
+
+       @GetMapping("/example")
+       public String getExampleData() {
+           return exampleFeignClient.getExampleData();
+       }
+   }
+   ```
+
+In this example, Feign is used to create a declarative REST client (`ExampleFeignClient`). The client is then injected into a Spring MVC controller (`MyController`), where it is used to make a declarative REST request to the "example-service." This approach simplifies the creation of REST clients by providing a clean and declarative way to define and use them.
+
+
+
+### Circuit Breaker:
+
+#### What is a Circuit Breaker?
+
+- **Definition:** A circuit breaker is a design pattern used in distributed systems to prevent a cascade of failures by temporarily stopping the flow of requests to a failing service.
+- **Purpose:** Protects a system from failures by providing a fallback mechanism when a service is unavailable or experiencing issues.
+
+### API Gateway:
+
+#### Why API Gateway?
+
+- **Purpose:** An API Gateway is a server that acts as an entry point for a microservices architecture, handling tasks such as authentication, authorization, and routing.
+- **Benefits:**
+  - Single entry point for clients.
+  - Simplifies microservices communication.
+  - Centralized security and monitoring.
+
+#### What is Cloud Gateway?
+
+- **Definition:** Spring Cloud Gateway is an API Gateway built on Spring WebFlux that provides a simple, yet effective way to route requests and apply cross-cutting concerns.
+
+### Spring Cloud Config:
+
+#### Configuring Server and Client Pointing to Configuration File in GitHub:
+
+- **Configuration Server:**
+  - Use `@EnableConfigServer` on the main class.
+  - Configure `spring.cloud.config.server.git.uri` to point to the GitHub repository.
+
+**Example:**
+```java
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.cloud.config.server.EnableConfigServer;
+
+@SpringBootApplication
+@EnableConfigServer
+public class ConfigServerApplication {
+    public static void main(String[] args) {
+        SpringApplication.run(ConfigServerApplication.class, args);
+    }
+}
+```
+
+- **Configuring Client:**
+  - Use `spring.cloud.config.uri` to specify the Config Server's address.
+  - Use `spring.application.name` and `spring.profiles.active` to identify the application and profile.
+
+**Example:**
+```yaml
+spring:
+  application:
+    name: my-service
+  profiles:
+    active: dev
+  cloud:
+    config:
+      uri: http://config-server:8888
+```
+
+#### HTTP, Resource-Based API for External Configuration:
+
+- **Endpoint:** `/actuator/configprops`
+- **Purpose:** Allows clients to query the configuration properties that are available for binding.
+
+### Lab: Using Configuration File Configured in GitHub:
+
+- **Objective:** Configure a Spring Cloud Config Server and a client to retrieve configuration from a GitHub repository.
+
+**Instructions:**
+
+1. **Config Server:**
+   - Create a Spring Boot application.
+   - Add `@EnableConfigServer` to the main class.
+   - Configure `spring.cloud.config.server.git.uri` to point to the GitHub repository.
+
+2. **Config Client:**
+   - Create a Spring Boot application.
+   - Configure `spring.cloud.config.uri` to specify the Config Server's address.
+   - Use `spring.application.name` and `spring.profiles.active` to identify the application and profile.
+
+3. **Access Configured Properties:**
+   - Create an endpoint in the client to access properties retrieved from the Config Server.
+   - Use `@RefreshScope` to refresh properties without restarting the application.
+
+In this lab example, the Config Server is set up to retrieve configuration from a GitHub repository, and the client is configured to fetch its properties from the Config Server. The `/actuator/configprops` endpoint can be used to inspect the available configuration properties.
+
+These simplified notes and examples cover the basics of a circuit breaker, API Gateway, and Spring Cloud Config, along with a hands-on lab for configuring a Spring Cloud Config Server and client using GitHub.
